@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#define HOW_MANY 10
+#define MY_RANDOM 10
+
+// declaramos nuestro semáforo
+pthread_mutex_t mutex;
+
+/*
+* Esta función contiene las instrucciones que ejecutará el hilo
+*/
+void *saludar(void *nombre)
+{
+		pthread_mutex_lock(&mutex);
+
+		// sección crítica
+		FILE *myFile;
+		myFile = fopen("salida.txt", "a");
+		if (myFile != NULL) {
+			fprintf(myFile, "%s - %d\n" , (char *)nombre,mem_total);
+			fclose(myFile);
+		}
+
+		// desbloquear el semáforo
+		pthread_mutex_unlock(&mutex);
+}
+
+
+/*
+* Esta es la función principal de nuestro programa.
+*/
+int main()
+{	
+	clock_t t_ini, t_fin;
+	double limite=10;
+	double secs=0;
+	// inicializamos nuestro generador de números aleatorios
+	srand(time(NULL));
+
+	// inicializamos nuestro semáforo
+	sem_init(&mutex, 0, 1);
+
+	// declaramos dos hilos
+	pthread_t t1;
+	pthread_t t2;
+	t_ini = clock();
+	while (secs<limite){
+		// inicializamos el primer hilo
+		pthread_create(&t1, NULL, saludar,"Hilo1");
+
+		// inicializamos el segundo hilo
+		pthread_create(&t2, NULL, despedir, "Hilo2");
+		
+		// indicamos al hilo principal que espere hasta que nuestros dos hilos terminen de ejecutarse.
+		pthread_join(t1, NULL);
+		pthread_join(t2, NULL);
+		t_fin = clock();
+		secs = (double)(t_fin - t_ini) / CLOCKS_PER_SEC;
+	}
+
+	// destruimos nuestro semáforo
+	sem_destroy(&mutex);
+
+	return 0;
+}
